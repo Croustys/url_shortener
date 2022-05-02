@@ -12,7 +12,7 @@ import (
 
 var urls map[uuid.UUID]string = make(map[uuid.UUID]string)
 var redirect_path string = "/"
-var PORT int = 7823
+var PORT int = 8080
 
 func shorten(w http.ResponseWriter, req *http.Request) {
 	var url map[string]string
