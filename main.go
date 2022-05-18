@@ -12,7 +12,7 @@ import (
 
 var urls map[uuid.UUID]string = make(map[uuid.UUID]string)
 var redirect_path string = "/"
-var PORT int = 7823
+var PORT int = 8080
 
 func shorten(w http.ResponseWriter, req *http.Request) {
 	var url map[string]string
@@ -22,16 +22,22 @@ func shorten(w http.ResponseWriter, req *http.Request) {
 	}
 	new_uuid := createUrl(url["url"])
 
-	json_response, err := json.Marshal(fmt.Sprintf("localhost:%d%s%s", PORT, redirect_path, new_uuid))
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	resp := make(map[string]string)
+	resp["url"] = new_uuid.String()
+	json_resp, err := json.Marshal(resp)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(json_response)
+	w.Write(json_resp)
 }
+
 func redirect(w http.ResponseWriter, req *http.Request) {
 	strUrl := req.URL.String()
 	slug := get_slug(strUrl)
