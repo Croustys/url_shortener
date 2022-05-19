@@ -17,13 +17,25 @@ type short_request struct {
 	Url string
 }
 
+func handle_cors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "https://aesthetic-pixie-fef135.netlify.app")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding")
+	(*w).Header().Set("Content-Type", "application/json")
+}
+
 func shorten(w http.ResponseWriter, req *http.Request) {
+	handle_cors(&w)
+
+	if (*req).Method != "POST" {
+		return
+	}
+
 	var url short_request
 	err := json.NewDecoder(req.Body).Decode(&url)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(url.Url)
 	new_uuid := createUrl(url.Url)
 
 	if err != nil {
@@ -38,11 +50,16 @@ func shorten(w http.ResponseWriter, req *http.Request) {
 		fmt.Println(err.Error())
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.Write(json_resp)
 }
 
 func redirect(w http.ResponseWriter, req *http.Request) {
+	handle_cors(&w)
+
+	if (*req).Method != "GET" {
+		return
+	}
+
 	strUrl := req.URL.String()
 	slug := get_slug(strUrl)
 
@@ -71,5 +88,4 @@ func main() {
 	http.HandleFunc(redirect_path, redirect)
 
 	http.ListenAndServe(":"+strconv.Itoa(PORT), nil)
-	fmt.Println("Server running")
 }
