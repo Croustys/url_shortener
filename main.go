@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/google/uuid"
 )
@@ -14,13 +13,18 @@ var urls map[uuid.UUID]string = make(map[uuid.UUID]string)
 var redirect_path string = "/"
 var PORT int = 8080
 
+type short_request struct {
+	Url string
+}
+
 func shorten(w http.ResponseWriter, req *http.Request) {
-	var url map[string]string
+	var url short_request
 	err := json.NewDecoder(req.Body).Decode(&url)
 	if err != nil {
 		fmt.Println(err)
 	}
-	new_uuid := createUrl(url["url"])
+	fmt.Println(url.Url)
+	new_uuid := createUrl(url.Url)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -50,15 +54,16 @@ func createUrl(url string) uuid.UUID {
 	urls[uuid] = url
 	return uuid
 }
-func get_slug(url string) uuid.UUID {
-	arr := strings.Split(url, "")
-	slicedArr := arr[len(redirect_path):]
-	slicedStr := strings.Join(slicedArr[:], "")
-	slug, err := uuid.Parse(slicedStr)
-	if err != nil {
-		panic(err.Error())
+
+func get_slug(input string) uuid.UUID {
+	if len(input) <= 1 {
+		return uuid.UUID{}
 	}
-	return slug
+	uuid, err := uuid.Parse(input[1:])
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	return uuid
 }
 
 func main() {
