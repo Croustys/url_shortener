@@ -18,7 +18,7 @@ type short_request struct {
 }
 
 func handle_cors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "https://aesthetic-pixie-fef135.netlify.app")
+	(*w).Header().Set("Access-Control-Allow-Origin", "https://shortrl.netlify.app")
 	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET")
 	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding")
 	(*w).Header().Set("Content-Type", "application/json")
