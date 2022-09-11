@@ -23,6 +23,16 @@ func shorten(url string) string {
 	return idx
 }
 
+func url_already_exists(w http.ResponseWriter, r *http.Request) {
+	json_resp, err := json.Marshal(map[string]string{"status_message": "shortened url already exists"})
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write(json_resp)
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
@@ -46,6 +56,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if url.Custom != "" && id == "" {
+
+			if urls[url.Custom] != "" {
+				url_already_exists(w, r)
+				return
+			}
+
 			id = url.Custom
 			urls[id] = url.Url
 		} else if id == "" {
