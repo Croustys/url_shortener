@@ -2,90 +2,66 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/google/uuid"
 )
 
-var urls map[uuid.UUID]string = make(map[uuid.UUID]string)
-var redirect_path string = "/"
-var PORT int = 8080
+var urls map[string]string = make(map[string]string)
+var i int = 0
+var PORT string = "8080"
 
 type short_request struct {
-	Url string
+	Url string `json:"url"`
 }
 
-func handle_cors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "https://shortrl.netlify.app")
-	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding")
-	(*w).Header().Set("Content-Type", "application/json")
-}
-
-func shorten(w http.ResponseWriter, req *http.Request) {
-	handle_cors(&w)
-
-	if (*req).Method != "POST" {
-		return
+func shorten(url string) string {
+	for k, v := range urls {
+		if v == url {
+			return k
+		}
 	}
+
+	idx := strconv.Itoa(i)
+	i++
+	urls[idx] = url
+	return idx
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "https://shortrl.netlify.app")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding")
+	w.Header().Set("Content-Type", "application/json")
 
 	var url short_request
-	err := json.NewDecoder(req.Body).Decode(&url)
+
+	err := json.NewDecoder(r.Body).Decode(&url)
 	if err != nil {
-		fmt.Println(err)
-	}
-	new_uuid := createUrl(url.Url)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		log.Println(err)
 	}
 
-	resp := make(map[string]string)
-	resp["url"] = new_uuid.String()
-	json_resp, err := json.Marshal(resp)
-	if err != nil {
-		fmt.Println(err.Error())
+	if r.Method == "POST" {
+		id := shorten(url.Url)
+
+		json_resp, err := json.Marshal(map[string]string{"url": id})
+		if err != nil {
+			log.Println(err.Error())
+		}
+
+		w.Write(json_resp)
+	} else if r.Method == "GET" {
+		idx := r.URL.Query()["r"][0]
+		http.Redirect(w, r, urls[idx], http.StatusSeeOther)
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("Wrong Request"))
 	}
-
-	w.Write(json_resp)
-}
-
-func redirect(w http.ResponseWriter, req *http.Request) {
-	handle_cors(&w)
-
-	if (*req).Method != "GET" {
-		return
-	}
-
-	strUrl := req.URL.String()
-	slug := get_slug(strUrl)
-
-	http.Redirect(w, req, urls[slug], http.StatusSeeOther)
-}
-
-func createUrl(url string) uuid.UUID {
-	uuid := uuid.New()
-	urls[uuid] = url
-	return uuid
-}
-
-func get_slug(input string) uuid.UUID {
-	if len(input) <= 1 {
-		return uuid.UUID{}
-	}
-	uuid, err := uuid.Parse(input[1:])
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	return uuid
 }
 
 func main() {
-	http.HandleFunc("/api/shorten", shorten)
-	http.HandleFunc(redirect_path, redirect)
+	http.HandleFunc("/", handler)
 
-	http.ListenAndServe(":"+strconv.Itoa(PORT), nil)
+	log.Println("Listening on", PORT)
+	http.ListenAndServe(":"+PORT, nil)
 }
