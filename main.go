@@ -12,16 +12,11 @@ var i int = 0
 var PORT string = "8080"
 
 type short_request struct {
-	Url string `json:"url"`
+	Url    string `json:"url"`
+	Custom string `json:"custom"`
 }
 
 func shorten(url string) string {
-	for k, v := range urls {
-		if v == url {
-			return k
-		}
-	}
-
 	idx := strconv.Itoa(i)
 	i++
 	urls[idx] = url
@@ -29,8 +24,8 @@ func shorten(url string) string {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "https://shortrl.netlify.app")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding")
 	w.Header().Set("Content-Type", "application/json")
 
@@ -42,7 +37,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "POST" {
-		id := shorten(url.Url)
+		var id string
+
+		for k, v := range urls {
+			if v == url.Url {
+				id = k
+			}
+		}
+
+		if url.Custom != "" && id == "" {
+			id = url.Custom
+			urls[id] = url.Url
+		} else if id == "" {
+			id = shorten(url.Url)
+		}
 
 		json_resp, err := json.Marshal(map[string]string{"url": id})
 		if err != nil {
@@ -50,13 +58,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Write(json_resp)
-	} else if r.Method == "GET" {
+		return
+	}
+	if r.Method == "GET" {
 		idx := r.URL.Query()["r"][0]
 		http.Redirect(w, r, urls[idx], http.StatusSeeOther)
-	} else {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write([]byte("Wrong Request"))
+		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func main() {
