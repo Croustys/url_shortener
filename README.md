@@ -2,17 +2,31 @@
 
 ## Usage
 
-`POST` `/api/shorten` with the request body containing a JSON with the URL we'd like to shorten. `Returns` the slug you can be redirected with <br /><br />
-`GET` `/{slug}` redirects you to the url you've given in the post request<br />
+### `POST`
 
-### Examples
+- `/` with the request body containing a JSON with the URL we'd like to shorten. `Returns` the slug you can be redirected with <br /><br />
 
-`POST` `api/shorten` `Body`: `'URL': 'https://www.google.com/'`<br />
-`Returns` a random UUID slug `(ea5ec738-e36c-4ed4-be42-73df0fdd5e2f)`
+### `GET`
 
-`GET` `/ea5ec738-e36c-4ed4-be42-73df0fdd5e2f` redirects you to `'https://www.google.com/'`
+- `/?r={slug}` redirects you to the url you've given in the post request<br />
+- You can pass a `'custom'` field as well in the JSON body which will return a Custom redirect URL
 
-### Hosted on Digital Ocean
+## Examples
+
+`POST` `/` `Body`: `'url': 'https://www.google.com/'`
+`Returns` a random number slug `12`
+
+`POST` `/` `Body`: `{'url': 'https://www.google.com/', 'custom": 'ggl'}`
+`Returns` `ggl`
+
+`GET` `/?r=12` redirects you to `'https://www.google.com/'`
+`GET` `/?r=ggl` redirects you to `'https://www.google.com/'`
+
+### Hosted on [Fly.io](https://fly.io/)
+
+# Production domain
+
+[`links.barabasakos.hu`](https://links.barabasakos.hu)
 
 ### Frontend
 
