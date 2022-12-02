@@ -1,18 +1,13 @@
-# syntax=docker/dockerfile:1
-
-FROM golang:1.18-alpine
+FROM golang:1.18-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod ./
-COPY go.sum ./
+COPY . .
 
 RUN go mod download
 
-COPY *.go ./
+RUN go build -o url_shortener main.go
 
-RUN go build -o /url_shortener
+EXPOSE 3600
 
-EXPOSE 8080
-
-CMD [ "/url_shortener" ]
+CMD [ "./url_shortener" ]

@@ -9,7 +9,8 @@ import (
 
 var urls map[string]string = make(map[string]string)
 var i int = 0
-var PORT string = "8080"
+
+const PORT string = "3600"
 
 type short_request struct {
 	Url    string `json:"url"`
