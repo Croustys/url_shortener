@@ -1,5 +1,7 @@
 # URL Shortener Written in Go
 
+# OUTDATED as of 2022/12/03
+
 ## Usage
 
 ### `POST`
