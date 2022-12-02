@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 var urls map[string]string = make(map[string]string)
@@ -24,14 +25,13 @@ func shorten(url string) string {
 	return idx
 }
 
-func url_already_exists(w http.ResponseWriter, r *http.Request) {
-	json_resp, err := json.Marshal(map[string]string{"status_message": "shortened url already exists"})
+func to_json(key string, value string) []byte {
+	json, err := json.Marshal(map[string]string{key: value})
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	w.WriteHeader(http.StatusBadRequest)
-	w.Write(json_resp)
+	return json
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -41,55 +41,68 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == "POST" {
-		var url short_request
+		handleCreation(w, r)
+	} else if r.Method == "GET" {
+		handleRedirect(w, r)
+	}
+}
 
-		err := json.NewDecoder(r.Body).Decode(&url)
-		if err != nil {
-			log.Println(err)
-		}
+func handleCreation(w http.ResponseWriter, r *http.Request) {
+	var url short_request
 
-		var id string
+	err := json.NewDecoder(r.Body).Decode(&url)
+	if err != nil {
+		log.Println(err)
+	}
 
-		for k, v := range urls {
-			if v == url.Url {
-				id = k
-			}
-		}
-
-		if url.Custom != "" && id == "" {
-
-			if urls[url.Custom] != "" {
-				url_already_exists(w, r)
-				return
-			}
-
-			id = url.Custom
-			urls[id] = url.Url
-		} else if id == "" {
-			id = shorten(url.Url)
-		}
-
-		json_resp, err := json.Marshal(map[string]string{"url": id})
-		if err != nil {
-			log.Println(err.Error())
-		}
-
-		w.Write(json_resp)
+	if _, exists := urls[url.Custom]; exists {
+		json := to_json("status_message", "Custom url already exists")
+		w.WriteHeader(http.StatusConflict)
+		w.Write(json)
 		return
 	}
-	if r.Method == "GET" {
-		idx := r.URL.Query()["r"][0]
-		if urls[idx] != "" {
-			http.Redirect(w, r, urls[idx], http.StatusSeeOther)
+
+	if url.Custom != "" {
+		custom_url := url.Custom
+		urls[custom_url] = url.Url
+
+		json := to_json("url", custom_url)
+		w.WriteHeader(http.StatusOK)
+		w.Write(json)
+		return
+	}
+
+	for k, v := range urls {
+		if v == url.Url {
+			json := to_json("url", k)
+			w.WriteHeader(http.StatusOK)
+			w.Write(json)
+			return
 		}
 	}
 
+	short_url := shorten(url.Url)
+	json := to_json("url", short_url)
 	w.WriteHeader(http.StatusOK)
+	w.Write(json)
+}
+func handleRedirect(w http.ResponseWriter, r *http.Request) {
+	subRoute := r.URL.Path[1:]
+	idx := strings.Split(subRoute, "/")[0]
+
+	if redirect_url, exists := urls[idx]; exists {
+		http.Redirect(w, r, redirect_url, http.StatusSeeOther)
+		return
+	}
+
+	json := to_json("status_message", "Url associated to the requested shortUrl does not exist")
+	w.WriteHeader(http.StatusNotFound)
+	w.Write(json)
 }
 
 func main() {
 	http.HandleFunc("/", handler)
 
 	log.Println("Listening on", PORT)
-	http.ListenAndServe(":"+PORT, nil)
+	http.ListenAndServe("localhost:"+PORT, nil)
 }
