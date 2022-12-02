@@ -4,8 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-RUN go mod download
-
 RUN go build -o url_shortener main.go
 
 EXPOSE 3600
