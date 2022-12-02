@@ -22,7 +22,7 @@
 `GET` `/?r=12` redirects you to `'https://www.google.com/'`
 `GET` `/?r=ggl` redirects you to `'https://www.google.com/'`
 
-### Hosted on [Fly.io](https://fly.io/)
+### Hosted on ~~[Fly.io](https://fly.io/)~~ [Oracle](https://www.oracle.com/id/)
 
 # Production domain
 
