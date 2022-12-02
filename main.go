@@ -35,19 +35,14 @@ func url_already_exists(w http.ResponseWriter, r *http.Request) {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding")
-	w.Header().Set("Content-Type", "application/json")
-
-	var url short_request
-
-	err := json.NewDecoder(r.Body).Decode(&url)
-	if err != nil {
-		log.Println(err)
-	}
-
 	if r.Method == "POST" {
+		var url short_request
+
+		err := json.NewDecoder(r.Body).Decode(&url)
+		if err != nil {
+			log.Println(err)
+		}
+
 		var id string
 
 		for k, v := range urls {
@@ -79,8 +74,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method == "GET" {
 		idx := r.URL.Query()["r"][0]
-		http.Redirect(w, r, urls[idx], http.StatusSeeOther)
-		return
+		if urls[idx] != "" {
+			http.Redirect(w, r, urls[idx], http.StatusSeeOther)
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
