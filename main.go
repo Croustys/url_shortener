@@ -104,5 +104,5 @@ func main() {
 	http.HandleFunc("/", handler)
 
 	log.Println("Listening on", PORT)
-	http.ListenAndServe("localhost:"+PORT, nil)
+	http.ListenAndServe(":"+PORT, nil)
 }
