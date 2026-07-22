@@ -1,1 +1,4 @@
 *.exe
+build
+node_modules
+.wrangler
